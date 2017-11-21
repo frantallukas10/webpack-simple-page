@@ -1,7 +1,9 @@
 body {
-	background-color: $red;
+	background-color: red;
 }
 
-h1 {
-	display: flex;
+.header-holder {
+	background-color: white;
+	height: 100px;
+	width: 100%;
 }

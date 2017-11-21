@@ -1,1 +1,0 @@
-# webpack-simple-page

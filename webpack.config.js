@@ -1,7 +1,7 @@
 //Dependencies
 const path = require('path')
 const webpack = require('webpack')
-const { optimize , HotModuleReplacementPlugin } = require('webpack')
+const { optimize, NamedModulesPlugin } = require('webpack')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const cleanWebpackPlugin = require('clean-webpack-plugin')
@@ -9,9 +9,7 @@ const cleanWebpackPlugin = require('clean-webpack-plugin')
 const prod = process.env.NODE_ENV === 'production'
 const getDevtool = () => {
     let devtool
-    prod 
-    ? devtool = false 
-    : devtool = 'source-map'
+    prod ? devtool = false : devtool = 'source-map'
     return devtool
 }
 const getLoaders = () =>({
@@ -96,6 +94,8 @@ const getPlugins = () => {
         new HtmlWebpackPlugin({
             title: 'Project Demo',
             template: './src/index.html',
+            hash: true,
+            inject: 'body',
             minify:{
                 caseSensitive:true,
                 collapseWhitespace:true
@@ -103,8 +103,7 @@ const getPlugins = () => {
         }),
         new webpack.DefinePlugin({
             'process.env': {'NODE_ENV': JSON.stringify('production')}
-        }),
-        new optimize.CommonsChunkPlugin({name: 'common'})
+        })
     )
     if(prod) {
         plugins.push(
@@ -113,22 +112,21 @@ const getPlugins = () => {
         )
     }
     else {
-        plugins.push(new HotModuleReplacementPlugin())
+        plugins.push(new NamedModulesPlugin())
     }
     return plugins
 }
 
 const getDevServer = () =>({
-    contentBase: path.resolve(__dirname,'public'),
-    port: 3000,
-    hot: true,
+    contentBase: path.resolve(__dirname,'src'),
     open: true,
     historyApiFallback: true,
     overlay: {
         warnings: true,
         errors: true
     },
-    compress: true
+    compress: true,
+    port: 3000,
 })
 
 const getOutput = () =>({
@@ -141,8 +139,8 @@ module.exports =  {
     context: path.resolve(__dirname),
     devtool: getDevtool(),
     entry:['./src/index.js'],
-    output: getOutput(),
     module: getLoaders(),
     plugins: getPlugins(),
-    devServer: getDevServer()
+    devServer: getDevServer(),
+    output: getOutput()
 }
