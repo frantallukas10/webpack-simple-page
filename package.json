@@ -21,6 +21,8 @@
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^0.11.2",
     "html-webpack-plugin": "^2.30.1",
+    "imagemin-gifsicle": "^5.2.0",
+    "imagemin-webpack": "^1.1.2",
     "node-sass": "^4.5.3",
     "postcss-import": "^11.0.0",
     "postcss-loader": "^2.0.6",
@@ -29,5 +31,6 @@
     "style-loader": "^0.18.2",
     "webpack": "^3.6.0",
     "webpack-dev-server": "^2.9.1"
-  }
+  },
+  "dependencies": {}
 }

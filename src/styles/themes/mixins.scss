@@ -1,0 +1,26 @@
+@mixin placeholder($color:"") {
+  &::-webkit-input-placeholder {
+    font-family: Arial, Helvetica, sans-serif;
+    @if $color !="" {
+      -webkit-text-fill-color: $color;
+    }
+  }
+  &:-moz-placeholder {
+    font-family: Arial, Helvetica, sans-serif;
+    @if $color !="" {
+      -webkit-text-fill-color: $color;
+    }
+  }
+  &::-moz-placeholder {
+    font-family: Arial, Helvetica, sans-serif;
+    @if $color !="" {
+      -webkit-text-fill-color: $color;
+    }
+  }
+  &:-ms-input-placeholder {
+    font-family: Arial, Helvetica, sans-serif;
+    @if $color !="" {
+      -webkit-text-fill-color: $color;
+    }
+  }
+}

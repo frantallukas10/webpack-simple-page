@@ -1,124 +1,146 @@
 //Dependencies
 const path = require('path')
 const webpack = require('webpack')
-const { optimize, NamedModulesPlugin } = require('webpack')
+const {
+    optimize,
+    NamedModulesPlugin
+} = require('webpack')
 const ExtractTextPlugin = require('extract-text-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const cleanWebpackPlugin = require('clean-webpack-plugin')
 
-const prod = process.env.NODE_ENV === 'production'
+const { ImageminWebpackPlugin } = require('imagemin-webpack')
+const imageminGifsicle = require('imagemin-gifsicle')
+
+const imageminManifest = {}
+
+const isprod = process.env.NODE_ENV === 'production'
 const getDevtool = () => {
     let devtool
-    prod ? devtool = false : devtool = 'source-map'
+    isprod ? devtool = false : devtool = 'source-map'
     return devtool
 }
-const getLoaders = () =>({
-        rules:[
-            {
-                test:/\.scss$/,
-                use: ExtractTextPlugin.extract({
-                    use:[
-                        {
-                            loader: 'css-loader',
-                            options: { 
-                                importLoaders: 1,
-                                sourceMap: true,
-                            },
-                        },
-                        {
-                            loader: 'postcss-loader',
-                            options: {
-                                sourceMap: true,
-                                plugins: (loader) => {
-                                     if(prod) {
-                                        return [
-                                            require('postcss-import')({ root: loader.resourcePath }),
-                                            require('autoprefixer')(),
-                                            require('cssnano')({
-                                                discardComments: {
-                                                    removeAll: true
-                                                },
-                                                discardUnused: false,
-                                                mergeIdents: false,
-                                                reduceIdents: false,
-                                                safe: true,
-                                            }),
-                                        ]
-                                    }
-                                    else {
-                                        return [
-                                            require('postcss-import')({ root: loader.resourcePath }),
-                                            require('autoprefixer')(),
-                                        ]
-                                    }
-                                },
-                            },
-                        },
-                        'sass-loader',
-                    ],
-                })
-            },
-            // {
-            //      test: /\.(js|jsx)$/,
-            //     use: {
-            //         loader: 'babel-loader',
-            //         options: {
-            //             presets: ['es2015'],
-            //         }
-            //     }
-            // },
-            {
-                test: /\.(png|jpg|gif|svg|eot|ttf|woff|woff2)$/,
-                use: [
-                    {
-                        loader: 'url-loader',
+
+const getLoaders = () => ({
+    rules: [{
+            test: /\.scss$/,
+            use: ExtractTextPlugin.extract({
+                use: [{
+                        loader: 'css-loader',
                         options: {
-                            limit: 10000,
-                            mimetype:'image/svg+xml',
-                            // name: '[name].[ext]',
-                            // outputPath: 'images/'
-                        }
-                    }
-                ]
+                            importLoaders: 1,
+                            sourceMap: true,
+                            minimize: true,
+                        },
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            sourceMap: true,
+                            plugins: (loader) => {
+                                if (isprod) {
+                                    return [
+                                        require('postcss-import')({
+                                            root: loader.resourcePath
+                                        }),
+                                        require('autoprefixer')(),
+                                        require('cssnano')({
+                                            discardComments: {
+                                                removeAll: true
+                                            },
+                                            discardUnused: false,
+                                            mergeIdents: false,
+                                            reduceIdents: false,
+                                            safe: true,
+                                        }),
+                                    ]
+                                } else {
+                                    return [
+                                        require('postcss-import')({
+                                            root: loader.resourcePath
+                                        }),
+                                        require('autoprefixer')(),
+                                    ]
+                                }
+                            },
+                        },
+                    },
+                    'sass-loader',
+                ],
+            })
+        },
+        {
+            test: path.resolve(__dirname, 'src/styles/fonts'),
+            loader: 'file-loader',
+            options: {
+                name: 'styles/fonts/[name].[ext]'
             }
-        ]
+        },
+        {
+            test: path.resolve(__dirname, 'src/styles/images'),
+            loader: 'file-loader',
+            options: {
+                emitFile: true, // Don't forget emit images. 
+                name: 'styles/images/[name].[ext]',
+            },
+        },
+    ]
 })
 
 const getPlugins = () => {
-    let plugins=[]
+    let plugins = []
     plugins.push(
         new ExtractTextPlugin(
-            'styles.css',
-            {allChunks: true}
+            'styles.css', {
+                allChunks: true
+            }
         ),
         new HtmlWebpackPlugin({
             title: 'Project Demo',
             template: './src/index.html',
-            hash: true,
+            hash: false,
             inject: 'body',
-            minify:{
-                caseSensitive:true,
-                collapseWhitespace:true
+            minify: {
+                caseSensitive: true,
+                collapseWhitespace: true
             }
         }),
         new webpack.DefinePlugin({
-            'process.env': {'NODE_ENV': JSON.stringify('production')}
+            'process.env': {
+                'NODE_ENV': JSON.stringify('production')
+            }
         })
     )
-    if(prod) {
+    if (isprod) {
         plugins.push(
-            new optimize.UglifyJsPlugin ({comments:false}),
-            new cleanWebpackPlugin(['public/*.*'], {verbose: true})
+            new optimize.UglifyJsPlugin({
+                comments: false
+            }),
+            new cleanWebpackPlugin(['public/*.*'], {
+                verbose: true
+            }),
+            new ImageminWebpackPlugin({
+                bail: false,
+                excludeChunksAssets: false,
+                imageminOptions: {
+                    plugins: [
+                        imageminGifsicle()
+                    ],
+                },
+                manifest: imageminManifest, // This object will contain source and interpolated filenames. 
+                maxConcurrency: os.cpus().length,
+                name: 'styles/images/[hash].[ext]',
+                test: path.resolve(__dirname, 'src/styles/images'),
+            })
         )
-    }
-    else {
+    } else {
         plugins.push(new NamedModulesPlugin())
     }
     return plugins
 }
 
-const getDevServer = () =>({
-    contentBase: path.resolve(__dirname,'src'),
+const getDevServer = () => ({
+    contentBase: path.resolve(__dirname, 'src'),
     open: true,
     historyApiFallback: true,
     overlay: {
@@ -129,16 +151,16 @@ const getDevServer = () =>({
     port: 3000,
 })
 
-const getOutput = () =>({
+const getOutput = () => ({
     path: path.resolve(__dirname, 'public'),
     filename: '[name].index.js'
 })
 
-module.exports =  {
-    target:'web',
+module.exports = {
+    target: 'web',
     context: path.resolve(__dirname),
     devtool: getDevtool(),
-    entry:['./src/index.js'],
+    entry: ['./index.js'],
     module: getLoaders(),
     plugins: getPlugins(),
     devServer: getDevServer(),
